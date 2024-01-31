@@ -29,6 +29,10 @@ func (s StringSet) Len() int {
 	return len(s.items)
 }
 
+func (s StringSet) ToArray() []string {
+	return s.items
+}
+
 func NewStringSet() *StringSet {
 	return &StringSet{
 		items:    make([]string, 0),

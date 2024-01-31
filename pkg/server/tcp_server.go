@@ -52,8 +52,8 @@ func (t *TCPServer) handleConnection(conn net.Conn) {
 		// Run the crawler and mount the result
 		controller := runner.TimeoutCrawl(link, depth)
 		response := map[string]interface{}{
-			"validLinks":   controller.ValidLinks,
-			"invalidLinks": controller.InvalidLinks,
+			"validLinks":   controller.ValidLinks.ToArray(),
+			"invalidLinks": controller.InvalidLinks.ToArray(),
 		}
 
 		// Send response to the client
