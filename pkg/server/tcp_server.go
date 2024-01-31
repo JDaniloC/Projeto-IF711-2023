@@ -26,7 +26,10 @@ func (t *TCPServer) handleConnection(conn net.Conn) {
 		s, err := rw.ReadString('\n')
 
 		if err != nil {
-			rw.WriteString(fmt.Sprintf("Error on read the request: %s", err))
+			errorMsg, _ := json.Marshal(map[string]interface{}{
+				"error": fmt.Sprintf("Error on read the request: %s", err),
+			})
+			rw.Write(append(errorMsg, '\n'))
 			rw.Flush()
 			return
 		}
@@ -34,7 +37,10 @@ func (t *TCPServer) handleConnection(conn net.Conn) {
 		// Deserialize the request
 		request := &utils.Request{}
 		if err := json.Unmarshal([]byte(s), &request); err != nil {
-			rw.WriteString(fmt.Sprintf("Erro on deserialize to JSON: %s", err))
+			errorMsg, _ := json.Marshal(map[string]interface{}{
+				"error": fmt.Sprintf("Erro on deserialize to JSON: %s", err),
+			})
+			rw.Write(append(errorMsg, '\n'))
 			rw.Flush()
 			return
 		}
@@ -83,7 +89,7 @@ func (t *TCPServer) Start() (err error) {
 
 		go t.handleConnection(conn)
 	}
-	return
+	return nil
 }
 
 func NewTCPServer(addr string) *TCPServer {

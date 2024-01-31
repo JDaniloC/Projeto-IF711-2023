@@ -1,41 +1,52 @@
 package server
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"net"
 	"testing"
 )
 
+const (
+	address = ":6250"
+)
+
 func init() {
-	tcp := NewTCPServer(":1123")
+	server := NewUDPServer(address)
 
 	go func() {
-		tcp.Start()
+		server.Start()
 	}()
 }
 
-func TestTCPServer_Connection(t *testing.T) {
-	conn, err := net.Dial("tcp", ":1123")
+func TestUDPServer_Connection(t *testing.T) {
+	s, err := net.ResolveUDPAddr("udp4", address)
 	if err != nil {
-		t.Error("could not connect to server: ", err)
+		t.Error("could not resolve address:", err)
+	}
+	conn, err := net.DialUDP("udp4", nil, s)
+	if err != nil {
+		t.Error("could not connect to server:", err)
 	}
 	conn.Close()
 }
 
-func TestTCPServer_Request(t *testing.T) {
+func TestUDPServer_Request(t *testing.T) {
 	request := map[string]interface{}{
 		"link":  "https://hackerspaces.org/",
-		"depth": 2,
+		"depth": 3,
 	}
 	req, err := json.Marshal(request)
 	if err != nil {
 		t.Error("Error on serialize request", err)
 	}
+	addr, err := net.ResolveUDPAddr("udp4", address)
+	if err != nil {
+		t.Error("could not resolve address:", err)
+	}
 
-	t.Run("Send TCP request", func(t *testing.T) {
-		conn, err := net.Dial("tcp", ":1123")
+	t.Run("Send UDP request", func(t *testing.T) {
+		conn, err := net.DialUDP("udp4", nil, addr)
 		if err != nil {
 			t.Error("could not connect to server: ", err)
 		}
@@ -46,14 +57,14 @@ func TestTCPServer_Request(t *testing.T) {
 			t.Error("could not write payload to server: ", err)
 		}
 
-		reader := bufio.NewReader(conn)
-		s, err := reader.ReadString('\n')
+		buffer := make([]byte, 2048)
+		n, _, err := conn.ReadFromUDP(buffer)
 		if err != nil {
-			t.Error("Error on read server answer:", err)
+			t.Error("could not read payload from server: ", err)
 		}
 
 		var response map[string]interface{}
-		err = json.Unmarshal([]byte(s), &response)
+		err = json.Unmarshal([]byte(buffer[:n]), &response)
 		if err != nil {
 			t.Error("Could not unmarshal response", err)
 		}
