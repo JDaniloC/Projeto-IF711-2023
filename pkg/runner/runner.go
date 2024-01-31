@@ -65,10 +65,14 @@ func crawl(wg *sync.WaitGroup, control *c.Controller, url string, depth int) {
 	}
 }
 
-func TimeoutCrawl(control *c.Controller, url string) {
+func TimeoutCrawl(url string, depth int) *c.Controller {
+	controller := c.NewController(depth)
+
 	var wg sync.WaitGroup
 
 	wg.Add(1)
-	crawl(&wg, control, url, 0)
+	crawl(&wg, controller, url, 0)
 	wg.Wait()
+
+	return controller
 }
