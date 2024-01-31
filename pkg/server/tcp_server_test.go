@@ -8,12 +8,8 @@ import (
 	"testing"
 )
 
-const (
-	addr = ":1123"
-)
-
 func init() {
-	tcp := NewTCPServer(addr)
+	tcp := NewTCPServer(":1123")
 
 	go func() {
 		tcp.Start()
@@ -21,41 +17,52 @@ func init() {
 }
 
 func TestTCPServer_Connection(t *testing.T) {
-	conn, err := net.Dial("tcp", addr)
+	conn, err := net.Dial("tcp", ":1123")
 	if err != nil {
 		t.Error("could not connect to server: ", err)
 	}
-	defer conn.Close()
+	conn.Close()
 }
 
 func TestTCPServer_Request(t *testing.T) {
 	request := map[string]interface{}{
 		"link":  "https://hackerspaces.org/",
-		"depth": 1,
+		"depth": 2,
 	}
-	json, err := json.Marshal(request)
+	req, err := json.Marshal(request)
 	if err != nil {
 		t.Error("Error on serialize request", err)
 	}
 
-	conn, err := net.Dial("tcp", addr)
-	if err != nil {
-		t.Error("could not connect to server: ", err)
-	}
-	defer conn.Close()
-
 	t.Run("Send a simple request", func(t *testing.T) {
-		_, err = conn.Write(append(json, '\n'))
+		conn, err := net.Dial("tcp", ":1123")
+		if err != nil {
+			t.Error("could not connect to server: ", err)
+		}
+		defer conn.Close()
+
+		_, err = conn.Write(append(req, '\n'))
 		if err != nil {
 			t.Error("could not write payload to server: ", err)
 		}
 
-		response, err := bufio.NewReader(conn).ReadString('\n')
+		reader := bufio.NewReader(conn)
+		s, err := reader.ReadString('\n')
 		if err != nil {
-			t.Error("Erro ao ler resposta do servidor:", err)
-			return
+			t.Error("Error on read server answer:", err)
 		}
 
-		fmt.Println("Resposta recebida do servidor: ", response)
+		var response map[string]interface{}
+		err = json.Unmarshal([]byte(s), &response)
+		if err != nil {
+			t.Error("Could not unmarshal response", err)
+		}
+
+		errMsg, hasError := response["error"].(string)
+		if hasError {
+			t.Error(errMsg)
+		}
+
+		fmt.Printf("Resposta recebida do servidor: %s\n", response)
 	})
 }

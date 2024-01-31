@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 
+	utils "github.com/JDaniloC/Projeto-IF711-2023/internal/utils"
 	runner "github.com/JDaniloC/Projeto-IF711-2023/pkg/runner"
 )
 
@@ -31,22 +32,16 @@ func (t *TCPServer) handleConnection(conn net.Conn) {
 		}
 
 		// Deserialize the request
-		var request map[string]interface{}
-		err = json.Unmarshal([]byte(s), &request)
-		if err != nil {
+		request := &utils.Request{}
+		if err := json.Unmarshal([]byte(s), &request); err != nil {
 			rw.WriteString(fmt.Sprintf("Erro on deserialize to JSON: %s", err))
 			rw.Flush()
 			return
 		}
 
 		// Extract the request params
-		link, ok1 := request["link"].(string)
-		depth, ok2 := request["depth"].(int)
-		if !ok1 || !ok2 {
-			rw.WriteString("Missing request params link or depth")
-			rw.Flush()
-			return
-		}
+		link := request.Link
+		depth := request.Depth
 
 		// Run the crawler and mount the result
 		controller := runner.TimeoutCrawl(link, depth)
@@ -57,22 +52,9 @@ func (t *TCPServer) handleConnection(conn net.Conn) {
 
 		// Send response to the client
 		responseJSON, _ := json.Marshal(response)
-		rw.Write([]byte(responseJSON))
+		rw.Write(append(responseJSON, '\n'))
 		rw.Flush()
 	}
-}
-
-func (t *TCPServer) handleConnections() (err error) {
-	for {
-		conn, err := t.server.Accept()
-		if err != nil || conn == nil {
-			println("Error on accept connection")
-			break
-		}
-
-		go t.handleConnection(conn)
-	}
-	return
 }
 
 func (t *TCPServer) Close() (err error) {
@@ -85,8 +67,8 @@ func (t *TCPServer) Start() (err error) {
 		fmt.Println("Erro on open the connection:", err)
 		return err
 	}
-	defer t.Close()
 	fmt.Println("Listening TCP server at", t.addr)
+	defer t.Close()
 
 	for {
 		conn, err := t.server.Accept()
@@ -98,7 +80,8 @@ func (t *TCPServer) Start() (err error) {
 			println("Error on create connection")
 			break
 		}
-		t.handleConnections()
+
+		go t.handleConnection(conn)
 	}
 	return
 }
