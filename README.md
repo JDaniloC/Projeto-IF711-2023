@@ -21,7 +21,7 @@ You can run the tests just entering in the module that you want to test and runn
 
 To execute the main benchmark tests, we recommend to enter in the main folder and use the following commands:
 ```
-go test -bench=. -benchtime=1x -benchmem -cpuprofile=cpu.out -memprofile=mem.out -count=10000 | tee bench.txt
+go test -bench=. -benchtime=1x -benchmem -cpuprofile=cpu.out -memprofile=mem.out -timeout=0 -count=10000 | tee bench.txt
 
 # See the graphs of CPU/MEM usage
 go tool pprof -http :8081 (mem|cpu).out

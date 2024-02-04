@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net"
 
-	utils "github.com/JDaniloC/Projeto-IF711-2023/internal/utils"
-	runner "github.com/JDaniloC/Projeto-IF711-2023/pkg/runner"
+	"github.com/JDaniloC/Projeto-IF711-2023/internal/utils"
+	"github.com/JDaniloC/Projeto-IF711-2023/pkg/runner"
 )
 
 type TCPServer struct {

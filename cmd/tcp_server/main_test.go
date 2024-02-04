@@ -24,12 +24,12 @@ func BenchmarkTCPServer(b *testing.B) {
 		b.Error("Error on serialize request", err)
 	}
 
-	for i := 0; i < b.N; i++ {
-		conn, err := net.Dial("tcp", ":1123")
-		if err != nil {
-			b.Error("could not connect to server: ", err)
-		}
+	conn, err := net.Dial("tcp", ":1123")
+	if err != nil {
+		b.Error("could not connect to server: ", err)
+	}
 
+	for i := 0; i < b.N; i++ {
 		_, err = conn.Write(append(req, '\n'))
 		if err != nil {
 			b.Error("could not write payload to server: ", err)
@@ -51,7 +51,6 @@ func BenchmarkTCPServer(b *testing.B) {
 		if hasError {
 			b.Error(errMsg)
 		}
-
-		conn.Close()
 	}
+	conn.Close()
 }

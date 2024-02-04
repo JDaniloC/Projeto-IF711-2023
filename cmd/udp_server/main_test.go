@@ -32,12 +32,11 @@ func BenchmarkTCPServer(b *testing.B) {
 		b.Error("could not resolve address:", err)
 	}
 
+	conn, err := net.DialUDP("udp4", nil, address)
+	if err != nil {
+		b.Error("could not connect to server: ", err)
+	}
 	for i := 0; i < b.N; i++ {
-		conn, err := net.DialUDP("udp4", nil, address)
-		if err != nil {
-			b.Error("could not connect to server: ", err)
-		}
-
 		_, err = conn.Write(append(req, '\n'))
 		if err != nil {
 			b.Error("could not write payload to server: ", err)
@@ -59,7 +58,6 @@ func BenchmarkTCPServer(b *testing.B) {
 		if hasError {
 			b.Error(errMsg)
 		}
-
-		conn.Close()
 	}
+	conn.Close()
 }
