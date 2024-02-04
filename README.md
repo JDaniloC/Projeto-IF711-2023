@@ -19,6 +19,14 @@ You can run the tests just entering in the module that you want to test and runn
 
 > Important: The [runner module](./pkg/runner/) has no a normal test, but has a benchmark test, so you need to run as `go test -bench=. -count=100`, where the count can be omitted being just `go test -bench .`.
 
+To execute the main benchmark tests, we recommend to enter in the main folder and use the following commands:
+```
+go test -bench=. -benchtime=1x -benchmem -cpuprofile=cpu.out -memprofile=mem.out -count=10000 | tee bench.txt
+
+# See the graphs of CPU/MEM usage
+go tool pprof -http :8081 (mem|cpu).out
+```
+
 ## How it works?
 The servers receive a request with the `link` url that will starts the crawl, and the number of `depth`, that specifies how far the recursion will go. The response it will be a object with `validLinks` and `invalidLinks` string arrays.
 
