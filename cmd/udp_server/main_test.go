@@ -18,7 +18,7 @@ func init() {
 	go udpServer.Start()
 }
 
-func BenchmarkTCPServer(b *testing.B) {
+func BenchmarkUDPServer(b *testing.B) {
 	request := map[string]interface{}{
 		"link":  "https://hackerspaces.org/",
 		"depth": 1,
