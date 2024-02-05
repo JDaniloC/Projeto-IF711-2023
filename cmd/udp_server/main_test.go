@@ -36,6 +36,8 @@ func BenchmarkUDPServer(b *testing.B) {
 	if err != nil {
 		b.Error("could not connect to server: ", err)
 	}
+
+	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err = conn.Write(append(req, '\n'))
 		if err != nil {
