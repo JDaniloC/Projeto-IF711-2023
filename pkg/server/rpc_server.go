@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net"
+	"net/http"
 	"net/rpc"
 
 	"github.com/JDaniloC/Projeto-IF711-2023/pkg/runner"
@@ -20,7 +21,7 @@ type Response struct {
 	InvalidLinks []string
 }
 
-func (c *CrawlerRPC) Crawl(request Request, response *Response) error {
+func (c *CrawlerRPC) Crawl(request *Request, response *Response) error {
 	controller := runner.TimeoutCrawl(request.Link, request.Depth)
 	response.ValidLinks = controller.ValidLinks.ToArray()
 	response.InvalidLinks = controller.InvalidLinks.ToArray()
@@ -29,35 +30,26 @@ func (c *CrawlerRPC) Crawl(request Request, response *Response) error {
 
 type RPCServer struct {
 	addr   string
-	server *rpc.Server
+	server net.Listener
 }
 
-func (r *RPCServer) Close() {
-	// O servidor RPC não precisa ser fechado explicitamente
-}
-
-func (r *RPCServer) Start() error {
-	r.server = rpc.NewServer()
-	if err := r.server.Register(&CrawlerRPC{}); err != nil {
+func (r *RPCServer) Start() (err error) {
+	rpcCrawler := new(CrawlerRPC)
+	if err := rpc.Register(rpcCrawler); err != nil {
 		return fmt.Errorf("error registering service: %s", err)
 	}
 
-	listener, err := net.Listen("tcp", r.addr)
+	rpc.HandleHTTP()
+
+	r.server, err = net.Listen("tcp", r.addr)
 	if err != nil {
 		return fmt.Errorf("error opening listener: %s", err)
 	}
-	defer listener.Close()
-
 	fmt.Println("Listening RPC server at", r.addr)
+	defer r.server.Close()
 
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			fmt.Printf("Error accepting connection: %s", err)
-			continue
-		}
-		go r.server.ServeConn(conn)
-	}
+	http.Serve(r.server, nil)
+	return nil
 }
 
 func NewRPCServer(addr string) *RPCServer {

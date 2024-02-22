@@ -1,11 +1,11 @@
-package server
+package main
 
 import (
 	rpc "github.com/JDaniloC/Projeto-IF711-2023/pkg/server"
 )
 
 const (
-	addr = ":1234" // Endereço para o servidor RPC
+	addr = ":1234"
 )
 
 func main() {

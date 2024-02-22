@@ -4,36 +4,27 @@ import (
 	"fmt"
 	"log"
 	"net/rpc"
+
+	utils "github.com/JDaniloC/Projeto-IF711-2023/pkg/server"
 )
 
 const (
 	serverAddress = "localhost:1234"
 )
 
-type Request struct {
-	Link  string `json:"link"`
-	Depth int    `json:"depth"`
-}
-
-type Response struct {
-	ValidLinks   []string `json:"validLinks"`
-	InvalidLinks []string `json:"invalidLinks"`
-}
-
 func main() {
-	client, err := rpc.Dial("rpc", serverAddress)
-	if err != nil {
-		log.Fatalf("Erro ao conectar ao servidor RPC: %s", err)
-	}
-	defer client.Close()
-
-	request := Request{
+	var response utils.Response
+	request := &utils.Request{
 		Link:  "https://hackerspaces.org/",
 		Depth: 2,
 	}
 
-	// Chama o método remoto no servidor RPC
-	var response Response
+	client, err := rpc.DialHTTP("tcp", serverAddress)
+	if err != nil {
+		log.Fatalf("could not connect to server: " + err.Error())
+	}
+	defer client.Close()
+
 	if err := client.Call("CrawlerRPC.Crawl", request, &response); err != nil {
 		log.Fatalf("Erro ao chamar método remoto: %s", err)
 	}
