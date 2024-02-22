@@ -16,7 +16,7 @@ func init() {
 	go rpcServer.Start()
 }
 
-func BenchmarkTCPServer(b *testing.B) {
+func BenchmarkRPCServer(b *testing.B) {
 	var response utils.Response
 	request := &utils.Request{
 		Link:  "https://hackerspaces.org/",
