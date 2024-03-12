@@ -13,10 +13,10 @@ type CrawlerAMQP = CrawlerRPC
 
 type RabbitMQ struct {
 	addr     string
-	channel  *amqp.Channel
 	rabbitMQ *amqp.Connection
-	request  amqp.Queue
-	response amqp.Queue
+	Channel  *amqp.Channel
+	Request  amqp.Queue
+	Response amqp.Queue
 }
 
 func (r *RabbitMQ) processRequest(request *Request) *Response {
@@ -34,13 +34,13 @@ func (r *RabbitMQ) Start() (err error) {
 		return err
 	}
 
-	r.channel, err = r.rabbitMQ.Channel()
+	r.Channel, err = r.rabbitMQ.Channel()
 	if err != nil {
 		log.Fatalf("%s: %s", "Failed to open a channel", err)
 		return err
 	}
 
-	r.request, err = r.channel.QueueDeclare(
+	r.Request, err = r.Channel.QueueDeclare(
 		"request", // name
 		false,     // durable
 		false,     // delete when unused
@@ -52,7 +52,7 @@ func (r *RabbitMQ) Start() (err error) {
 		log.Fatalf("%s: %s", "Failed to declare a queue", err)
 	}
 
-	r.response, err = r.channel.QueueDeclare(
+	r.Response, err = r.Channel.QueueDeclare(
 		"reponse", // name
 		false,     // durable
 		false,     // delete when unused
@@ -69,8 +69,8 @@ func (r *RabbitMQ) Start() (err error) {
 }
 
 func (r *RabbitMQ) Serve() {
-	msgs, err := r.channel.Consume(
-		r.request.Name, // queue
+	msgs, err := r.Channel.Consume(
+		r.Request.Name, // queue
 		"",             // consumer
 		true,           // auto-ack
 		false,          // exclusive
@@ -99,9 +99,9 @@ func (r *RabbitMQ) Serve() {
 		}
 
 		// Send the response back
-		if err := r.channel.Publish(
+		if err := r.Channel.Publish(
 			"",              // exchange
-			r.response.Name, // routing key
+			r.Response.Name, // routing key
 			false,           // mandatory
 			false,           // immediate
 			amqp.Publishing{
@@ -116,7 +116,7 @@ func (r *RabbitMQ) Serve() {
 }
 
 func (r *RabbitMQ) Close() {
-	r.channel.Close()
+	r.Channel.Close()
 	r.rabbitMQ.Close()
 }
 

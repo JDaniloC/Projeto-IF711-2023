@@ -1,20 +1,15 @@
-package server
+package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 
+	utils "github.com/JDaniloC/Projeto-IF711-2023/pkg/server"
 	"github.com/streadway/amqp"
 )
 
-const (
-	rabbitMQAddr = "amqp://guest:guest@localhost:5672/"
-	queueName    = "crawl"
-)
-
 func init() {
-	amqpServer := NewRabbitMQ(rabbitMQAddr)
+	amqpServer := utils.NewRabbitMQ(rabbitMQAddr)
 
 	go func() {
 		amqpServer.Start()
@@ -22,44 +17,37 @@ func init() {
 	}()
 }
 
-func TestAMQPServer_Connection(t *testing.T) {
-	conn, err := amqp.Dial(rabbitMQAddr)
-	if err != nil {
-		t.Errorf("failed to connect to RabbitMQ: %v", err)
-	}
-	defer conn.Close()
-}
-
-func TestAMQPServer_Request(t *testing.T) {
-	request := &Request{
-		"https://hackerspaces.org/", 1,
+func BenchmarkRPCServer(b *testing.B) {
+	request := &utils.Request{
+		Link: "https://hackerspaces.org/", Depth: 1,
 	}
 	bytes, err := json.Marshal(request)
 	if err != nil {
-		t.Errorf("filed to mashall request: %v", err)
+		b.Errorf("filed to mashall request: %v", err)
 	}
 
-	amqpClient := NewRabbitMQ(rabbitMQAddr)
+	amqpClient := utils.NewRabbitMQ(rabbitMQAddr)
 	err = amqpClient.Start()
 	if err != nil {
-		t.Errorf("failed to connect to RabbitMQ: %v", err)
+		b.Errorf("failed to connect to RabbitMQ: %v", err)
 	}
 	defer amqpClient.Close()
 
 	msgs, err := amqpClient.Channel.Consume(
 		amqpClient.Response.Name, // queue
 		"",                       // consumer
-		true,                     // auto-ack
+		false,                    // auto-ack
 		false,                    // exclusive
 		false,                    // no-local
 		false,                    // no-wait
 		nil,                      // args
 	)
 	if err != nil {
-		t.Errorf("failed to register a consumer: %v", err)
+		b.Errorf("failed to register a consumer: %v", err)
 	}
 
-	t.Run("Send AMQP request", func(t *testing.T) {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
 		if err := amqpClient.Channel.Publish(
 			"",                      // exchange
 			amqpClient.Request.Name, // routing key
@@ -69,12 +57,12 @@ func TestAMQPServer_Request(t *testing.T) {
 				ContentType: "application/json",
 				Body:        bytes,
 			}); err != nil {
-			t.Errorf("failed to publish the request: %v", err)
+			b.Errorf("failed to publish the request: %v", err)
 		}
 
-		for d := range msgs {
-			fmt.Printf("Received a message: %s", d.Body)
+		for b := range msgs {
+			b.Ack(false)
 			break
 		}
-	})
+	}
 }
