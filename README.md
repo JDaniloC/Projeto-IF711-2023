@@ -1,4 +1,4 @@
-# UDP/TCP Links verifier
+# UDP, TCP, RPC and AMQP Links verifier
 A Go service to verify valid links of a website. It will verify recursively the links of the links and serve using TCP/UDP protocols.
 
 ## How to install
@@ -8,7 +8,7 @@ go mod download
 ```
 
 ## How to run th application
-To execute the TCP/UDP server/client you need enter in the directory and run the `go run .` as showed in the next lines, where the _application_ can be `tcp_server`, `tcp_client`, `udp_server` or `udp_client`:
+To execute the TCP/UDP server/client you need enter in the directory and run the `go run .` as showed in the next lines, where the _application_ can be `tcp_server`, `udp_server`, `rpc_server` or `rabbit_server`:
 ```bash
 cd cmd/{application}
 go run .

@@ -17,7 +17,7 @@ func init() {
 	}()
 }
 
-func BenchmarkRPCServer(b *testing.B) {
+func BenchmarkAMQPServer(b *testing.B) {
 	request := &utils.Request{
 		Link: "https://hackerspaces.org/", Depth: 1,
 	}
